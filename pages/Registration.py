@@ -9,32 +9,48 @@ from datetime import datetime
 import yaml
 
 from core.db_utils import db_connection, create_tables
-from core.utils_register import face_registration
+from core.utils_register import face_registration, get_userinfo_data, get_registration_data
 from core.utils import get_image_base64, NumpyArrayEncoder, image_cropped, base64_img
 from core.liveliness_face import frontalfacedetector
 from core.camera_init import fresh
+from core.db_connect import connect_db
 
 st.set_page_config(layout='wide')
 st.title("Registration")
 
-with open('./config/db_config.yaml', 'r') as config_file:
-    config_data = yaml.safe_load(config_file)
+# with open('./config/db_config.yaml', 'r') as config_file:
+#     config_data = yaml.safe_load(config_file)
+# DB_NAME = config_data['Database'][0]['db_name']
+# print(f'Db_name {DB_NAME}')
 
-DB_NAME = config_data['Database'][0]['db_name']
-print(f'Db_name {DB_NAME}')
+# DB_NAME = connect_db()
+DB_NAME = 'srmlt_attendance'
 conn = db_connection(DB_NAME)
 create_tables()
 
 frontal_face_detection = dlib.get_frontal_face_detector()
 
+def insert_user_info(mysql_cursor):
+    mysql_cursor.execute('''INSERT INTO userinfo (
+                     badgenumber, defaultdeptid, name, Password, Card, Privilege, AccGroup, TimeZones,
+                    Gender, Birthday, street, zip, ophone,FPHONE, pager, minzu, title, SN, SSN, U_Time,
+                    State, City, SECURITYFLAGS, DelTag, RegisterOT, AutoSchPlan, MinAutoSchinterval, Image_id, entry_token)
+                    VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
+                          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                         (None, None, None, None, None, None, None, None, None, None, None, None,
+                          None, None, None, None, None, None, None, None, None, None, None, None,
+                          None, None, None, None, None))
+    conn.commit()
+
+
 def registration(images):
     img_h, img_w,_ = images[0].shape
-    mysql_cursor = conn.cursor()
+    mysql_cursor = conn.cursor(buffered=True)
     if "registration" not in st.session_state:
         st.session_state.registration = False
     if 'face_embeddings' not in st.session_state:
         st.session_state.face_embeddings = []
-    
+
     for idx, (face, image) in enumerate(zip(st.session_state.faces, st.session_state.image_list)):
         # face -> ([97, 146, 179, 180],)
         print(idx, face)
@@ -70,12 +86,17 @@ def registration(images):
     print('face_encoding', encoded_face_encoding)
     print('face_encoding type', type(encoded_face_encoding))
     created_on = datetime.now()
+    next_userid = get_userinfo_data(mysql_cursor)
+    print('next_userid', next_userid)
 
-    mysql_cursor.execute('''INSERT INTO registration (
-                attendee_name, attendee_id, device, image_base64, face_embedding, created_on)
+
+    mysql_cursor.execute('''INSERT INTO manual_registration (
+                attendee_name, userid, device, image_base64, face_embedding, created_on)
                 VALUES (%s, %s, %s, %s, %s, %s)''',
-                    (attendee_name, attendee_id, device, image_base64, encoded_face_encoding, created_on))
+                    (attendee_name, next_userid, device, image_base64, encoded_face_encoding, created_on))
     conn.commit()
+    insert_user_info(mysql_cursor)
+
     # st.success("Registration submitted successfully.")
     st.session_state.registration = False
     st.session_state.face_embeddings = []
@@ -88,10 +109,10 @@ placeholder = st.empty()
 with placeholder.container():
     col1, col2 = st.columns(2)
     attendee_name = col1.text_input('Attendee Name', value='', key='attendee_name')
-    attendee_id = col1.text_input('Attendee ID', value='', key='attendee_id')
+    # attendee_id = col1.text_input('Attendee ID', value='', key='attendee_id')
     device = col1.text_input('Registration Device', value='', key='device')
 
-    if attendee_name and attendee_id and device:
+    if attendee_name  and device:
         # Open camera and capture photo
         camera_col, button_col = col2.columns(2)
         with camera_col:
@@ -100,7 +121,7 @@ with placeholder.container():
             button_placeholder = st.empty()
         # # ip_cam_url = ip_config_data['ip_cam_address']
         # cam = cv2.VideoCapture(ip_cam_url)
-        num_images_to_cap = 5
+        num_images_to_cap = 3
 
         if 'image_list' not in st.session_state :
             st.session_state.image_list = []
@@ -137,17 +158,17 @@ with placeholder.container():
                 if len(st.session_state.image_list) >= num_images_to_cap:
                     break
             except Exception as e:
-                print(f"Error\n{e}")
+                print(f"Errors\n{e}")
                 if 'image_list' not in st.session_state :
                     st.session_state.image_list = []
                 
         if 'faces' not in st.session_state:
             st.session_state.faces = []
-
+            print('enter here')
         try:   
             for camera_photo in st.session_state.image_list:
                 st.session_state.faces.append(frontalfacedetector(camera_photo, frontal_face_detection)[0])
-
+            print('  st.session_state.faces',  st.session_state.faces)
             status = registration(st.session_state.image_list)
         except Exception as e:
             print(f"Error\n{e}")
@@ -159,11 +180,17 @@ with placeholder.container():
         # print(status)
         # attendee_name, attendee_id, device = None, None, None
         # camera_photo = None
-        if status:
+        try:
+            if status:
+                print('status', status)
             # placeholder.empty()
             status = False
-            for key in st.session_state:
-                del st.session_state[key]
+        except Exception as e:
+            print('eee' , e)
+        
+        for key in st.session_state:
+            del st.session_state[key]
+
         st.experimental_rerun()
 
 

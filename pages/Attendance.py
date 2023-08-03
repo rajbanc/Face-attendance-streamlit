@@ -14,22 +14,24 @@ from core.db_utils import db_connection, create_tables
 from core.utils_register import get_user_data, get_guest_data
 from core.utils import image_cropped
 from core.utils_attendance import verify_face
+from core.db_connect import connect_db
 
 st.cache_data.clear()
 st.set_page_config(layout='wide')
 
 st.title("Attendance")
 
-with open('./config/db_config.yaml', 'r') as config_file:
-    config_data = yaml.safe_load(config_file)
+# with open('./config/db_config.yaml', 'r') as config_file:
+#     config_data = yaml.safe_load(config_file)
 
 create_tables()
 
 if __name__=="__main__":
-    DB_NAME = config_data['Database'][0]['db_name']
-    print(f'Db_name {DB_NAME}')
+    # DB_NAME = connect_db()
+    DB_NAME = 'srmlt_attendance'
+    # DB_NAME = config_data['Database'][0]['db_name']
     conn = db_connection(DB_NAME)
-    device = 'dev1'
+    device = 'IP_cam'
 
     frontal_face_detector = dlib.get_frontal_face_detector()
     model_path = './liveliness_model/liveness.model'
@@ -61,6 +63,7 @@ if __name__=="__main__":
     mysql_cursor = conn.cursor()
     stored_encodings, attendee_names, attendee_ids = get_user_data(mysql_cursor)
     guest_stored_encoding, guest_names, guest_attendee_ids = get_guest_data(mysql_cursor)
+    # print("guest_stored_encoding, guest_names, guest_attendee_ids ", guest_names, guest_attendee_ids )
 
     print(f"initail camers  {fresh.camera }")
     with open('./config/ip_cam_config.yaml', 'r') as config_file:
@@ -99,14 +102,17 @@ if __name__=="__main__":
             for face in recognized_faces:
                 category = face['category']
                 if category == 'manual':
+                    print("category", category)
                     display_txt = ''
                     name = face['name']
                     id = face['id']
                     state = face['state']
-                    dt = str(face['current_time']).split('.')[0]
-                    if state == 'in':
+                    print('state', state, type(state))
+                    dt = str(face['currentime']).split('.')[0]
+                    print('dt', dt)
+                    if state == 0:
                         display_txt = f"Welcome {name.title()} {id} {dt}"
-                    elif state == 'out':
+                    elif state == 1:
                         display_txt = f"Thank you {name.title()} {id} {dt}"
                     attendent_placeholder.text(display_txt)
                 elif category=='guest':
@@ -114,15 +120,16 @@ if __name__=="__main__":
                     display_txt = ''
                     state = face['state']
                     image = face['image']
+                    dt = str(face['currentime']).split('.')[0]
                     id = face['id']
                     print(id)
 
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    img_placeholder.image(image, state)
-                    if state == 'in':
-                        display_txt = f'Welcome Guest\n {id}'
-                    elif state == 'out':
-                        display_txt = f'Thank you Guest\n {id}'
+                    img_placeholder.image(image)
+                    if state == 0:
+                        display_txt = f'Welcome Guest\n {id} {dt}'
+                    elif state == 1:
+                        display_txt = f'Thank you Guest\n {id} {dt}'
                     text_placeholder.text(display_txt)
 
         

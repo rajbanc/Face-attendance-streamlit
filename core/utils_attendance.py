@@ -7,33 +7,12 @@ from datetime import datetime
 
 from core.utils import NumpyArrayEncoder, get_image_base64, base64_img
 
-duration = 3
+duration = 20
 
 def create_datetime(date, time):
     dt = str(date) + " " + str(time)
     dt = dt.split('.')[0]
     return datetime.strptime(dt,'%Y-%m-%d %H:%M:%S')
-
-def register_guest_attendee(cropped_face, encode_face):
-    guest_attendee_id = str(uuid.uuid4().hex)
-    guest_name = None
-    image_base64 = get_image_base64(np.asarray(cropped_face))
-    image= base64_img(image_base64)
-    cv2.imwrite("temp.jpg", image)
-    
-    face_encoding = {"face_embedding": encode_face}
-    encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
-
-    created_on = datetime.now()
-        
-    return guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on 
-
-def insert_guest_registration(mysql_cursor, guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on):
-    query = """INSERT INTO guest_registration(
-                guest_attendee_id, guest_name, image_base64, face_embedding, created_on)
-                VALUES (%s, %s, %s, %s, %s)"""
-                
-    mysql_cursor.execute(query, (guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on))
 
 def verify_face(
     image, stored_encodings, attendee_names, attendee_ids, conn, 
@@ -45,6 +24,10 @@ def verify_face(
 
     recognized_faces = []
     current_time = datetime.now().time()
+    checktype = 0
+    verifycode = 32
+    SN = 564
+    sensorid = 8848
 
      # Mapping coordinates from opencv into face_recognition format
     # Format [[x1, y2, w, h]] --> [(y1, x2, y2, x1)]
@@ -63,53 +46,56 @@ def verify_face(
             # aggregate matched user data
             attendee_name = attendee_names[match_index].upper()
             attendee_id = attendee_ids[match_index]
+            print('attendee_id', attendee_id)
+            print('attendee_ids', attendee_ids)
 
-            mysql_cursor.execute("""SELECT * FROM attendance WHERE 
-                            attendee_name = %s AND attendee_id = %s AND date = %s ORDER BY check_in DESC""",
-                            (attendee_name, attendee_id, datetime.now().date()))
+            mysql_cursor.execute("""SELECT * FROM checkinout WHERE userid = %s
+                             ORDER BY checktime DESC""",
+                            (attendee_id, ))
             attendance_result = mysql_cursor.fetchone()
+            print("attendance_result", attendance_result)
+
 
             if attendance_result: 
-                if attendance_result[6] is None:
-                    attendee_dt = create_datetime(attendance_result[4], attendance_result[5])
+                # grab value of checktype column and store in last_checktype variable
+                datetime_data = attendance_result[2]
+                print('datetime_Data', datetime_data, type(datetime_data))
+                dt = datetime_data.time()
+                last_checktype = int(attendance_result[3])
 
-                    diff = datetime.now() - attendee_dt
-                    if diff.total_seconds() > duration:
-                        # checktype: 1
-                        mysql_cursor.execute("""UPDATE attendance 
-                                    SET check_out = %s WHERE id=%s AND attendee_id = %s""",
-                                    (current_time, attendance_result[0], attendance_result[2])
-                        )
-                        conn.commit()
-                        recognized_faces.append({'name':attendee_name, 'id':attendee_id, 'state':'out', 'current_time':current_time, 'category':'manual'})
-                
-                elif isinstance(create_datetime(attendance_result[4], attendance_result[5]), datetime):
-                    attendee_dt = create_datetime(attendance_result[4], attendance_result[6])
-                    diff = datetime.now() - attendee_dt
+                if datetime_data.date() == datetime.now().date():
+                    'toggle checktype'
+                    if last_checktype == 0:
+                        checktype = 1
+                    elif last_checktype == 1:
+                        checktype = 0
 
-                    if diff.total_seconds() > duration:
-                        mysql_cursor.execute(
-                            """INSERT INTO attendance 
-                            (attendee_name, attendee_id, device, date, check_in, check_out)
-                            VALUES (%s,%s,%s,%s,%s,%s)""",
-                            (attendee_name, attendee_id, device, datetime.now().date(), datetime.now().time(), None) 
-                        )
-                        conn.commit()
-                        recognized_faces.append({'name':attendee_name, 'id':attendee_id, 'state':'in', 'current_time':current_time, 'category':'manual'})
+                else:
+                    checktype = 0
+
+                mysql_cursor.execute(
+                    """INSERT INTO checkinout
+                    (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    ( attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
+                )
+                conn.commit()
+                recognized_faces.append({'id': attendee_id,'name': attendee_name ,'state': checktype, 'currentime':current_time, 'category':'manual'})
 
             else:
                 '''If no rocord is found'''
-                # check type : 0
+                
                 mysql_cursor.execute(
-                    """INSERT INTO attendance 
-                    (attendee_name, attendee_id, device, date, check_in, check_out)
-                    VALUES (%s,%s,%s,%s,%s,%s)""",
-                    (attendee_name, attendee_id, device, datetime.now().date(), datetime.now().time(), None) 
+                    """INSERT INTO checkinout
+                    (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    ( attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                 )
                 conn.commit()
-                recognized_faces.append({'name':attendee_name, 'id':attendee_id, 'state':'in', 'current_time':current_time, 'category':'manual'})
-    
+                recognized_faces.append({'name':attendee_name, 'id':attendee_id, 'state': checktype, 'currentime':current_time, 'category':'manual'})
+        
         else:
+            # continue
             print('For Guest.')
             try:
                 guest_matches = face_recognition.compare_faces(guest_stored_encoding, encode_face, tolerance=0.45)
@@ -126,118 +112,108 @@ def verify_face(
                 continue
             
             if len(guest_face_dict) > 0:
-            # try:
                 guest_matches_id = np.argmin(guest_face_dict)
-                # print('guest id', guest_matches_id )
+                print('guest idss', guest_matches_id )
+
+                mysql_cursor.execute("""SELECT guest_id FROM guest_registration ORDER BY guest_id DESC""")
+                guest_attendance_results = mysql_cursor.fetchone()
 
                 if guest_matches[guest_matches_id]:
                     guest_attendee_id = guest_attendee_ids[guest_matches_id]
 
-                    mysql_cursor.execute("""SELECT * FROM guest_attendance 
-                                            WHERE guest_attendee_id = %s AND date = %s ORDER BY check_in DESC""",
-                                            (guest_attendee_id, datetime.now().date())
-                                        )
-                    guest_attendance_result = mysql_cursor.fetchone()
+                    if guest_attendance_results:
+                        mysql_cursor.execute("""SELECT * FROM checkinout WHERE userid = %s
+                             ORDER BY checktime DESC""",
+                            (guest_attendee_id, ))
+                        attendance_result = mysql_cursor.fetchone()
+                        # grab value of checktype column and store in last_checktype variable
+                        datetime_data = attendance_result[2]
+                        print('datetime_Data', datetime_data, type(datetime_data))
+                        
+                        last_checktype = int(attendance_result[3])
+                        print("last_checktype",last_checktype)
+                        if datetime_data.date() == datetime.now().date():
+                            'toggle checktype'
+                            if last_checktype == 0:
+                                checktype = 1
+                            elif last_checktype == 1:
+                                checktype = 0
 
-                    if guest_attendance_result:
-                        if guest_attendance_result[6] is None:
-                            guest_attendee_dt = create_datetime(guest_attendance_result[4], guest_attendance_result[5])
+                        else:
+                            checktype = 0
 
-                            diff = datetime.now()- guest_attendee_dt
-                            if diff.total_seconds() > duration:
-                                mysql_cursor.execute("""UPDATE guest_attendance SET check_out = %s WHERE 
-                                guest_attendee_id = %s  AND check_out IS NULL ORDER BY guest_attendee_id DESC LIMIT 1""",
-                                (current_time, guest_attendance_result[1])
-                                )
-                                conn.commit()
-                                # # Retrieve the updated row
-                                # mysql_cursor.execute("SELECT * FROM guest_attendance WHERE guest_attendee_id = %s", (guest_attendance_result[0],))
-                                # updated_row = mysql_cursor.fetchone()
-
-                                # # Print the updated row
-                                # print("updated_rows",  updated_row)
-
-                                recognized_faces.append({
-                                    'state':'out', 
-                                    'category':'guest', 
-                                    'image': cropped_face, 
-                                    'id':guest_attendee_id
-                                })
-                                
-                        elif isinstance(create_datetime(guest_attendance_result[4], guest_attendance_result[5]), datetime):
-                                guest_attendee_dt = create_datetime(guest_attendance_result[4], guest_attendance_result[6])
-                                diff = datetime.now() - guest_attendee_dt
-
-                                if diff.total_seconds() > duration:
-                                    mysql_cursor.execute(
-                                        """INSERT INTO guest_attendance(guest_attendee_id, guest_name, device, date, check_in, check_out)
-                                        VALUES (%s,%s,%s,%s,%s,%s)""",
-                                        (guest_attendee_id, None, device, datetime.now().date(), datetime.now().time(),None)
-                                    )
-                                    conn.commit()
-                                    recognized_faces.append({
-                                        'state':'in', 
-                                        'category':'guest', 
-                                        'image': cropped_face, 
-                                        'id':guest_attendee_id
-                                    })
-
-                    else: 
                         mysql_cursor.execute(
-                                """INSERT INTO guest_attendance(guest_attendee_id, guest_name, device, date, check_in, check_out)
-                                VALUES (%s,%s,%s,%s,%s,%s)""",
-                                (guest_attendee_id, None, device, datetime.now().date(), datetime.now().time(),None)
-                            )
+                            """INSERT INTO checkinout
+                            (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                            ( guest_attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
+                        )
                         conn.commit()
-                        recognized_faces.append({
-                            'state':'in', 
-                            'category':'guest', 
-                            'image' : cropped_face,
-                            'id':guest_attendee_id
-                        })
-
-                else:
-                    '''registration of guest for guest table with data'''
-                    guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on= register_guest_attendee(cropped_face, encode_face)
-
-                    insert_guest_registration(mysql_cursor, guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on)
-                    guest_stored_encoding.append(encode_face)
-                    guest_attendee_ids.append(guest_attendee_id)
+                        recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
                     
+                else:
+                    last_guest_id= guest_attendance_results[0]
+                    next_guest_id = last_guest_id + 1
+                    guest_name = None
+                    image_base64 = get_image_base64(np.asarray(cropped_face))
+                    image= base64_img(image_base64)
+                    face_encoding = {"face_embedding": encode_face}
+                    encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
+                    created_on = datetime.now()
+                    print('next_guest', next_guest_id)
                     mysql_cursor.execute(
-                        """INSERT INTO guest_attendance(guest_attendee_id, guest_name, device, date, check_in, check_out)
-                        VALUES (%s,%s,%s,%s,%s,%s)""",
-                        (guest_attendee_id, None, device,datetime.now().date(), datetime.now().time(),None)
+                        """INSERT INTO guest_registration(
+                                guest_id, guest_name, image_base64, face_embedding, created_on)
+                                VALUES (%s, %s, %s, %s, %s)""",
+                            (next_guest_id, guest_name, image_base64,encoded_face_encoding, created_on)   
                     )
                     conn.commit()
-                    recognized_faces.append({
-                        'state':'in_new', 
-                        'category':'guest', 
-                        'image': cropped_face,
-                        'id':guest_attendee_id
-                        })
-            # except Exception as e:
-            #     print(e)
+                    print('Inserted new guest')
+                    guest_stored_encoding.append(encode_face)
+                    guest_attendee_ids.append(next_guest_id)
+
+                    mysql_cursor.execute(
+                        """INSERT INTO checkinout
+                        (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                        ( next_guest_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
+                    )
+                    conn.commit()
+                    recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':next_guest_id, 'currentime':current_time,})
+
             else:
                 '''registration of guest for empty guest table'''
-                guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on= register_guest_attendee(cropped_face, encode_face)
-                
-                insert_guest_registration(mysql_cursor, guest_attendee_id, guest_name, image_base64, encoded_face_encoding, created_on)
-                guest_stored_encoding.append(encode_face)
-                guest_attendee_ids.append(guest_attendee_id)
+
+                init_userid = 40001
+                guest_name = None
+                image_base64 = get_image_base64(np.asarray(cropped_face))
+                image= base64_img(image_base64)
+                face_encoding = {"face_embedding": encode_face}
+                encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
+                created_on = datetime.now()
                 
                 mysql_cursor.execute(
-                    """INSERT INTO guest_attendance(guest_attendee_id, guest_name, device, date, check_in, check_out)
-                    VALUES (%s,%s,%s,%s,%s,%s)""",
-                    (guest_attendee_id, None, device,datetime.now().date(), datetime.now().time(),None)
+                   """INSERT INTO guest_registration(
+                        guest_id, guest_name, image_base64, face_embedding, created_on)
+                        VALUES (%s, %s, %s, %s, %s)""",
+                    (init_userid, guest_name, image_base64,encoded_face_encoding, created_on)   
                 )
                 conn.commit()
-                recognized_faces.append({'state':'in_new', 'category':'guest', 'image': cropped_face})
+                guest_stored_encoding.append(encode_face)
+                guest_attendee_ids.append(init_userid)
+
+                mysql_cursor.execute(
+                    """INSERT INTO checkinout
+                    (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                    ( init_userid, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
+                )
+                conn.commit()
+
+                
+                recognized_faces.append({'state':'in_new', 'category':'guest', 'image': cropped_face, 'id': init_userid, 'currentime':current_time,})
                 print('sucessful insert')
 
-    # except Exception as e:
-    #     print(f"Exception: \n{e}")
-    #     pass
     mysql_cursor.close()
     return recognized_faces, guest_stored_encoding, guest_attendee_ids
 
