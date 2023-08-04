@@ -49,6 +49,9 @@ if __name__=="__main__":
     with camera_col:
         camera_placeholder = st.empty()
         close_btn_placeholder = st.empty()
+    
+    with guest_col:
+        guest_placeholder = st.empty()
 
     with text_col:
         text_placeholder = st.empty()
@@ -113,7 +116,7 @@ if __name__=="__main__":
                         display_txt = f"Welcome {name.title()} {id} {dt}"
                     elif state == 1:
                         display_txt = f"Thank you {name.title()} {id} {dt}"
-                    attendent_placeholder.text(display_txt)
+                    close_btn_placeholder.text(display_txt)
                 elif category=='guest':
                     print("categori_guest")
                     display_txt = ''
@@ -124,13 +127,14 @@ if __name__=="__main__":
                     print(id)
 
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    img_placeholder.image(image)
-                    if state == 0:
+                    attendent_placeholder.image(image, state)
+                    if state == 'IN':
                         display_txt = f'Welcome Guest\n {id} {dt}'
-                    elif state == 1:
+                    elif state == 'OUT':
                         display_txt = f'Thank you Guest\n {id} {dt}'
-                    text_placeholder.text(display_txt)
-                    close_btn_placeholder.text(display_txt)
+                    print("DISPLAY", display_txt)
+                    guest_placeholder.text(display_txt)
+                    # close_btn_placeholder.text(display_txt)
 
 
         

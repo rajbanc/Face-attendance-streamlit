@@ -121,7 +121,7 @@ with placeholder.container():
             button_placeholder = st.empty()
         # # ip_cam_url = ip_config_data['ip_cam_address']
         # cam = cv2.VideoCapture(ip_cam_url)
-        num_images_to_cap = 3
+        num_images_to_cap = 5
 
         if 'image_list' not in st.session_state :
             st.session_state.image_list = []

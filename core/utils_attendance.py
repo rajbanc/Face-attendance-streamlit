@@ -135,7 +135,7 @@ def verify_face(
                                 ( guest_attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                             )
                             conn.commit()
-                            recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
+                            recognized_faces.append({'state':'OUT', 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
                     
                 else:
                     last_guest_id= guest_attendance_results[0]
@@ -164,7 +164,7 @@ def verify_face(
                         ( next_guest_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                     )
                     conn.commit()
-                    recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':next_guest_id, 'currentime':current_time,})
+                    recognized_faces.append({'state':'IN', 'category':'guest', 'image': cropped_face, 'id':next_guest_id, 'currentime':current_time,})
 
             else:
                 '''registration of guest for empty guest table'''
