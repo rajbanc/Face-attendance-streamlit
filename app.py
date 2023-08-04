@@ -5,7 +5,7 @@ import yaml
 
 from core.db_utils import create_database, create_tables
 from core.utils import cam_available
-from core.db_connect import connect_db
+from core.db_connect import get_dbname
 
 from core.camera_init import fresh
 print(f'{fresh=}')
@@ -19,12 +19,12 @@ st.cache_data.clear()
 # with open('./config/db_config.yaml', 'r') as config_file:
 #     config_data = yaml.safe_load(config_file)
 
-# DB_NAME = connect_db()
+# DB_NAME = get_dbname()
+# print('database_name', DB_NAME)
 DB_NAME = 'srmlt_attendance'
 
 # DB_NAME = config_data['Database'][0]['db_name']
 # print(f'Db_name {DB_NAME}')
-
 create_database(DB_NAME)
 
 create_tables()

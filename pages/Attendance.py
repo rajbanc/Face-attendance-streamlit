@@ -10,11 +10,11 @@ import yaml
 
 from core.camera_init import fresh
 from core.liveliness_face import check_liveliness
-from core.db_utils import db_connection, create_tables
+from core.db_utils import create_tables, db_connection
 from core.utils_register import get_user_data, get_guest_data
 from core.utils import image_cropped
 from core.utils_attendance import verify_face
-from core.db_connect import connect_db
+from core.db_connect import get_dbname
 
 st.cache_data.clear()
 st.set_page_config(layout='wide')
@@ -27,10 +27,11 @@ st.title("Attendance")
 create_tables()
 
 if __name__=="__main__":
-    # DB_NAME = connect_db()
+    # DB_NAME = get_dbname()
     DB_NAME = 'srmlt_attendance'
     # DB_NAME = config_data['Database'][0]['db_name']
     conn = db_connection(DB_NAME)
+
     device = 'IP_cam'
 
     frontal_face_detector = dlib.get_frontal_face_detector()
@@ -107,9 +108,7 @@ if __name__=="__main__":
                     name = face['name']
                     id = face['id']
                     state = face['state']
-                    print('state', state, type(state))
                     dt = str(face['currentime']).split('.')[0]
-                    print('dt', dt)
                     if state == 0:
                         display_txt = f"Welcome {name.title()} {id} {dt}"
                     elif state == 1:
@@ -131,6 +130,8 @@ if __name__=="__main__":
                     elif state == 1:
                         display_txt = f'Thank you Guest\n {id} {dt}'
                     text_placeholder.text(display_txt)
+                    close_btn_placeholder.text(display_txt)
+
 
         
         num = datetime.now().date() - yesterday

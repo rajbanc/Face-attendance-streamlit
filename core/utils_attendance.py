@@ -7,12 +7,8 @@ from datetime import datetime
 
 from core.utils import NumpyArrayEncoder, get_image_base64, base64_img
 
-duration = 20
+duration = 30
 
-def create_datetime(date, time):
-    dt = str(date) + " " + str(time)
-    dt = dt.split('.')[0]
-    return datetime.strptime(dt,'%Y-%m-%d %H:%M:%S')
 
 def verify_face(
     image, stored_encodings, attendee_names, attendee_ids, conn, 
@@ -23,7 +19,7 @@ def verify_face(
     mysql_cursor = conn.cursor(buffered=True)
 
     recognized_faces = []
-    current_time = datetime.now().time()
+    current_time = datetime.now()
     checktype = 0
     verifycode = 32
     SN = 564
@@ -46,41 +42,34 @@ def verify_face(
             # aggregate matched user data
             attendee_name = attendee_names[match_index].upper()
             attendee_id = attendee_ids[match_index]
-            print('attendee_id', attendee_id)
-            print('attendee_ids', attendee_ids)
 
             mysql_cursor.execute("""SELECT * FROM checkinout WHERE userid = %s
                              ORDER BY checktime DESC""",
                             (attendee_id, ))
             attendance_result = mysql_cursor.fetchone()
-            print("attendance_result", attendance_result)
-
 
             if attendance_result: 
                 # grab value of checktype column and store in last_checktype variable
-                datetime_data = attendance_result[2]
-                print('datetime_Data', datetime_data, type(datetime_data))
-                dt = datetime_data.time()
+                dt= attendance_result[2]
+                diff = current_time - dt
                 last_checktype = int(attendance_result[3])
-
-                if datetime_data.date() == datetime.now().date():
+                if dt.date() == datetime.now().date():
                     'toggle checktype'
                     if last_checktype == 0:
                         checktype = 1
                     elif last_checktype == 1:
                         checktype = 0
-
                 else:
                     checktype = 0
-
-                mysql_cursor.execute(
-                    """INSERT INTO checkinout
-                    (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
-                    VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
-                    ( attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
-                )
-                conn.commit()
-                recognized_faces.append({'id': attendee_id,'name': attendee_name ,'state': checktype, 'currentime':current_time, 'category':'manual'})
+                if diff.total_seconds() > duration:
+                    mysql_cursor.execute(
+                        """INSERT INTO checkinout
+                        (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                        ( attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
+                    )
+                    conn.commit()
+                    recognized_faces.append({'id': attendee_id,'name': attendee_name ,'state': checktype, 'currentime':current_time, 'category':'manual'})
 
             else:
                 '''If no rocord is found'''
@@ -127,29 +116,26 @@ def verify_face(
                             (guest_attendee_id, ))
                         attendance_result = mysql_cursor.fetchone()
                         # grab value of checktype column and store in last_checktype variable
-                        datetime_data = attendance_result[2]
-                        print('datetime_Data', datetime_data, type(datetime_data))
-                        
+                        dt = attendance_result[2]
+                        diff = current_time - dt
                         last_checktype = int(attendance_result[3])
                         print("last_checktype",last_checktype)
-                        if datetime_data.date() == datetime.now().date():
-                            'toggle checktype'
+                        if dt.date() == datetime.now().date():
                             if last_checktype == 0:
                                 checktype = 1
                             elif last_checktype == 1:
                                 checktype = 0
-
                         else:
                             checktype = 0
-
-                        mysql_cursor.execute(
-                            """INSERT INTO checkinout
-                            (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
-                            VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
-                            ( guest_attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
-                        )
-                        conn.commit()
-                        recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
+                        if diff.total_seconds() > duration:
+                            mysql_cursor.execute(
+                                """INSERT INTO checkinout
+                                (userid, checktime, checktype, verifycode, SN, sensorid, WorkCode, Reserved )
+                                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)""",
+                                ( guest_attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
+                            )
+                            conn.commit()
+                            recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
                     
                 else:
                     last_guest_id= guest_attendance_results[0]
@@ -160,7 +146,6 @@ def verify_face(
                     face_encoding = {"face_embedding": encode_face}
                     encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
                     created_on = datetime.now()
-                    print('next_guest', next_guest_id)
                     mysql_cursor.execute(
                         """INSERT INTO guest_registration(
                                 guest_id, guest_name, image_base64, face_embedding, created_on)
@@ -209,8 +194,6 @@ def verify_face(
                     ( init_userid, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                 )
                 conn.commit()
-
-                
                 recognized_faces.append({'state':'in_new', 'category':'guest', 'image': cropped_face, 'id': init_userid, 'currentime':current_time,})
                 print('sucessful insert')
 

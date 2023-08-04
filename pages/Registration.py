@@ -13,7 +13,7 @@ from core.utils_register import face_registration, get_userinfo_data, get_regist
 from core.utils import get_image_base64, NumpyArrayEncoder, image_cropped, base64_img
 from core.liveliness_face import frontalfacedetector
 from core.camera_init import fresh
-from core.db_connect import connect_db
+from core.db_connect import get_dbname
 
 st.set_page_config(layout='wide')
 st.title("Registration")
@@ -23,7 +23,7 @@ st.title("Registration")
 # DB_NAME = config_data['Database'][0]['db_name']
 # print(f'Db_name {DB_NAME}')
 
-# DB_NAME = connect_db()
+# DB_NAME = get_dbname()
 DB_NAME = 'srmlt_attendance'
 conn = db_connection(DB_NAME)
 create_tables()

@@ -15,13 +15,32 @@ def get_connection():
         password = config_data['Database'][0]['password']#hashlib.md5(config_data['Database'][0]['password']).hexdigest()
         
     )
+"""
+def get_connection1():
+    try:
+        print("GET CONNECTION TO SERVER")
+        return connector.connect(
+            host = config_data['Database_server'][0]['host_docker'] if sys.platform=='linux' else config_data['Database_server'][0]['host_win'],
+            port = config_data['Database_server'][0]['port'],
+            user = config_data['Database_server'][0]['user'],
+            password = config_data['Database_server'][0]['password']
+        )
+    except Exception as e:
+        print("cannot connect to server_database and connect to local server")
+    finally:
+        print("GET CONNECT TO LOCAL ")
+        return connector.connect(
+            host = config_data['Database_local'][0]['host_docker'] if sys.platform=='linux' else config_data['Database_local'][0]['host_win'],
+            port = config_data['Database_local'][0]['port'],
+            user = config_data['Database_local'][0]['user'],
+            password = config_data['Database_local'][0]['password'],
+        )"""
 
 
 def create_database(db_name):
-    db_creation_query = f'CREATE DATABASE IF NOT EXIST {db_name}'
+    db_creation_query = f'CREATE DATABASE IF NOT EXISTS {db_name}'
     conn = get_connection()
     sql_cursor = conn.cursor()
-    print('conn', conn)
 
     sql_cursor.execute("SHOW DATABASES")
     db_exists = False 
@@ -43,6 +62,29 @@ def db_connection(db_name):
         database = db_name
     )
 
+"""def db_connection1():
+    try:
+        print('connected to server datatabase')
+        return connector.connect(
+            host = config_data['Database_server'][0]['host_docker'] if sys.platform=='linux' else config_data['Database_server'][0]['host_win'],
+            port = config_data['Database_server'][0]['port'],
+            user = config_data['Database_server'][0]['user'],
+            password = config_data['Database_server'][0]['password'],
+            database = config_data['Database_server'][0]['db_name']
+        )
+    except Exception as e:
+        print("cannot connect to server_database")
+
+        print('connected to local database')
+        return connector.connect(
+            host = config_data['Database_local'][0]['host_docker'] if sys.platform=='linux' else config_data['Database_local'][0]['host_win'],
+            port = config_data['Database_local'][0]['port'],
+            user = config_data['Database_local'][0]['user'],
+            password = config_data['Database_local'][0]['password'],
+            database = config_data['Database_local'][0]['db_name']
+        )
+        """
+
 def create_table(db_name, table_name, col_names):
     table_creation_query = f'CREATE TABLE IF NOT EXISTS {table_name} {col_names}'
 
@@ -53,6 +95,8 @@ def create_table(db_name, table_name, col_names):
 def create_tables():
     # DB_NAME = 'adms_dbnew'
     DB_NAME = 'srmlt_attendance'
+    # DB_NAME = db_name
+
     TABLE_NAME = ['manual_registration', 'guest_registration', 'userinfo', 'checkinout']
 
     create_table(

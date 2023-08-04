@@ -27,7 +27,6 @@ def get_userinfo_data(mysql_cursor):
     mysql_cursor.execute('SELECT userid FROM userinfo ORDER BY userid DESC')
     try:
         last_userid = mysql_cursor.fetchone()[0]
-        print("last_userid ", last_userid)
         return last_userid + 1
     except:
         return 1
@@ -68,7 +67,6 @@ def get_guest_data(mysql_cursor):
     for row in guest:
         guest_name = row[2]
         guest_userid = row[1]
-        print(f'guest_id: {guest_userid}')
         face_embeddings = row[4]
         print('type face_embedd', type(face_embeddings))
         if isinstance(face_embeddings, bytes):
