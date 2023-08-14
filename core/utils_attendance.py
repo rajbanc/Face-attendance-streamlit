@@ -22,8 +22,8 @@ def verify_face(
     current_time = datetime.now()
     checktype = 0
     verifycode = 32
-    SN = 564
-    sensorid = 8848
+    SN = 1
+    sensorid = 124
 
      # Mapping coordinates from opencv into face_recognition format
     # Format [[x1, y2, w, h]] --> [(y1, x2, y2, x1)]
@@ -54,7 +54,6 @@ def verify_face(
                 diff = current_time - dt
                 last_checktype = int(attendance_result[3])
                 if dt.date() == datetime.now().date():
-                    'toggle checktype'
                     if last_checktype == 0:
                         checktype = 1
                     elif last_checktype == 1:
@@ -102,7 +101,6 @@ def verify_face(
             
             if len(guest_face_dict) > 0:
                 guest_matches_id = np.argmin(guest_face_dict)
-                print('guest idss', guest_matches_id )
 
                 mysql_cursor.execute("""SELECT guest_id FROM guest_registration ORDER BY guest_id DESC""")
                 guest_attendance_results = mysql_cursor.fetchone()
@@ -119,7 +117,6 @@ def verify_face(
                         dt = attendance_result[2]
                         diff = current_time - dt
                         last_checktype = int(attendance_result[3])
-                        print("last_checktype",last_checktype)
                         if dt.date() == datetime.now().date():
                             if last_checktype == 0:
                                 checktype = 1
@@ -135,14 +132,13 @@ def verify_face(
                                 ( guest_attendee_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                             )
                             conn.commit()
-                            recognized_faces.append({'state':'OUT', 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
+                            recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':guest_attendee_id, 'currentime':current_time,})
                     
                 else:
                     last_guest_id= guest_attendance_results[0]
                     next_guest_id = last_guest_id + 1
                     guest_name = None
                     image_base64 = get_image_base64(np.asarray(cropped_face))
-                    image= base64_img(image_base64)
                     face_encoding = {"face_embedding": encode_face}
                     encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
                     created_on = datetime.now()
@@ -164,7 +160,7 @@ def verify_face(
                         ( next_guest_id, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                     )
                     conn.commit()
-                    recognized_faces.append({'state':'IN', 'category':'guest', 'image': cropped_face, 'id':next_guest_id, 'currentime':current_time,})
+                    recognized_faces.append({'state':checktype, 'category':'guest', 'image': cropped_face, 'id':next_guest_id, 'currentime':current_time,})
 
             else:
                 '''registration of guest for empty guest table'''
@@ -172,7 +168,6 @@ def verify_face(
                 init_userid = 40001
                 guest_name = None
                 image_base64 = get_image_base64(np.asarray(cropped_face))
-                image= base64_img(image_base64)
                 face_encoding = {"face_embedding": encode_face}
                 encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
                 created_on = datetime.now()

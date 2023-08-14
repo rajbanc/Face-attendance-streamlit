@@ -1,9 +1,25 @@
+import streamlit as st
 import cv2
 import numpy as np
 import base64
 import io
 from PIL import Image
 from json import JSONEncoder
+
+import pandas as pd
+
+def report_btn_callback(mysql_cursor, id, report_placeholder):
+    print("id:", id)
+    try:
+        mysql_cursor.execute("""SELECT * FROM checkinout WHERE userid = %s ORDER BY checktime DESC""", (id,))
+        attendance_result = mysql_cursor.fetchall()
+        attendance_result = pd.DataFrame(attendance_result
+                                         ,columns=['id', 'userid', 'checktime', 'checktype', 'verifycode', 'SN', 'sensorid', 'WorkCode', 'Reserved'])
+        print("attendance: ", attendance_result)
+        # st.session_state['attendance_result'] = attendance_result
+        report_placeholder.write(attendance_result)
+    except Exception as e:
+        print("Error executing MySQL query:", e)
 
 def cam_available(ip_cam):
     cap = cv2.VideoCapture(ip_cam)

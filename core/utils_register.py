@@ -41,7 +41,6 @@ def get_user_data(mysql_cursor):
         userid = row[2]
         face_embeddings = row[5] #['face_embedding']
         # print('face_embedd', face_embeddings)
-        print('type face_embedd', type(face_embeddings))
         if isinstance(face_embeddings, bytes):
             face_embeddings = str(face_embeddings, encoding='utf-8')
         elif isinstance(face_embeddings, str):
@@ -68,7 +67,6 @@ def get_guest_data(mysql_cursor):
         guest_name = row[2]
         guest_userid = row[1]
         face_embeddings = row[4]
-        print('type face_embedd', type(face_embeddings))
         if isinstance(face_embeddings, bytes):
             face_embeddings = str(face_embeddings, encoding='utf-8')
         elif isinstance(face_embeddings, str):

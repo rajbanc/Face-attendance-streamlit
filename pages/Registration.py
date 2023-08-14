@@ -5,7 +5,6 @@ import json
 import time
 import numpy as np
 from datetime import datetime
-
 import yaml
 
 from core.db_utils import db_connection, create_tables
@@ -75,7 +74,6 @@ def registration(images):
             if idx == 0:
                 image_base64 = get_image_base64(face_img) # storing only one photo
                 image = base64_img(image_base64)
-                cv2.imwrite("temp1.jpg", image)
         else:
             st.error("Multiple faces detected. Only a single face should be detected.")
             time.sleep(3)
@@ -137,6 +135,7 @@ with placeholder.container():
             camera_placeholder.image(camera_rgb, caption="Capture Image")
             
             try:
+
                 capture_button = button_placeholder.button("Capture Image")
 
             except Exception as e:
