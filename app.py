@@ -11,7 +11,7 @@ from core.db_connect import get_dbname
 
 from core.camera_init import fresh
 
-st.title("Face Attendance system :")
+st.title("Face Attendance system ")
 st.cache_data.clear()
 
 

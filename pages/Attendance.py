@@ -113,7 +113,6 @@ if __name__=="__main__":
                     display_txt = ''
                     name = face['name']
                     id = face['id']
-                    print('id', id , type(id))
                     state = face['state']
                     dt = str(face['currentime']).split('.')[0]
                     if state == 0:

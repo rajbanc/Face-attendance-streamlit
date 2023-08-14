@@ -21,7 +21,6 @@ except Exception as e:
     print('error', e)
 
 if search_btn:
-    print('search_btn')
     mysql_cursor.execute("""SELECT * FROM checkinout WHERE userid = %s ORDER BY checktime DESC""", (id,))
     attendance_result = mysql_cursor.fetchall()
     if attendance_result:
