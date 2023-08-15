@@ -13,6 +13,7 @@ from core.utils import get_image_base64, NumpyArrayEncoder, image_cropped, base6
 from core.liveliness_face import frontalfacedetector
 from core.camera_init import fresh
 from core.db_connect import get_dbname
+print('freshh', fresh)
 
 st.set_page_config(layout='wide')
 st.title("Registration")
@@ -182,6 +183,12 @@ with placeholder.container():
         try:
             if status:
                 print('status', status)
+                text_color = "green"
+                font_size = "50px"
+                display_txt = 'Registration Successful!'
+                styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
+                st.markdown(styled_text, unsafe_allow_html=True)
+                # st.success('Registration Successful!')
             # placeholder.empty()
             status = False
         except Exception as e:

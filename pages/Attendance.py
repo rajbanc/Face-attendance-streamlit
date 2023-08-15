@@ -48,21 +48,22 @@ if __name__=="__main__":
     if 'id' not in st.session_state:
         st.session_state.id = []  
 
-    camera_col, guest_col, attendent_col = st.columns(3)
+    camera_col, attendent_col, guest_col = st.columns(3)
 
     with camera_col:
         camera_placeholder = st.empty()
         close_btn_placeholder = st.empty()
-        report_btn_placeholder = st.empty()
-        report_placeholder = st.empty()
-
-    
-    with guest_col:
-        guest_placeholder = st.empty()
    
     with attendent_col:
         attendent_placeholder = st.empty()
+        attendent_name_placeholder = st.empty()
+        attendent_date_placeholder = st.empty()
 
+    with guest_col:
+        guest_placeholder = st.empty()
+        guest_name_placeholder = st.empty()
+        guest_date_placeholder = st.empty()
+    
     error_placeholder = st.empty()
 
     mysql_cursor = conn.cursor()
@@ -105,6 +106,7 @@ if __name__=="__main__":
                 )
         
         ## detection and retrive 'in' or 'out' state
+        start_time = time.time()        
         if st.session_state['recognized_faces']:
             for face in st.session_state['recognized_faces']:
                 category = face['category']
@@ -116,45 +118,96 @@ if __name__=="__main__":
                     state = face['state']
                     dt = str(face['currentime']).split('.')[0]
                     if state == 0:
-                        display_txt = f"Welcome {name.title()} {id}{dt}"
+                        display_txt = f"Welcome "
+                        display_txt1 = f"{name.title()}"
+                        display_txt2 = f" {dt}"
                     elif state == 1:
-                        display_txt = f"Thank you {name.title()} {id} {dt}"
+                        display_txt = f"Thank you"
+                        display_txt1 = f"{name.title()}"
+                        display_txt2 = f"{dt}"
 
-                    close_btn_placeholder.text(display_txt)
-
-                    # try:
-                    #     # report_btn_placeholder.button(f"ID: {id}", on_click=report_btn_callback, args=(mysql_cursor, id, report_placeholder))
-                    #     if report_btn_placeholder.button(f"ID: {id}"):
-                    #         print(f"{st.session_state['recognized_faces'] = }")
-                    #         mysql_cursor.execute("""SELECT * FROM checkinout WHERE userid = %s ORDER BY checktime DESC""", (id,))
-                    #         attendance_result = mysql_cursor.fetchall()
-                    #         attendance_df = pd.DataFrame(attendance_result,
-                    #                             columns=['id', 'userid', 'checktime', 'checktype', 'verifycode', 'SN', 'sensorid', 'WorkCode', 'Reserved'])
-                    #         report_placeholder.write(attendance_df)
-                    # except Exception as e:
-                    #     print("Error executing MySQL query:", e)
+                        # close_btn_placeholder.text(display_txt)
+                    if state == 0:
+                        text_color = "green"
+                        font_size = "50px"
+                        text_color1 = "green"
+                        font_size1 = "30px"
+                    elif state == 1:
+                        text_color = "blue"
+                        font_size = "50px"
+                        text_color1 = "blue"
+                        font_size1 = "30px"
                         
+                    styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
+                    styled_text1 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt1}</p>'
+                    styled_text2 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt2}</p>'
+                    attendent_placeholder.markdown(styled_text, unsafe_allow_html=True)
+                    attendent_name_placeholder.markdown(styled_text1, unsafe_allow_html=True)
+                    attendent_date_placeholder.markdown(styled_text2, unsafe_allow_html=True)
+                         
                 elif category=='guest':
                     print("categori_guest")
                     display_txt = ''
                     state = face['state']
                     image = face['image']
                     dt = str(face['currentime']).split('.')[0]
-                    id = face['id']
+                    guest_id = face['id']
 
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    attendent_placeholder.image(image)
+                    close_btn_placeholder.image(image)
+                    # if state == 0:
+                    #     display_txt = f'Welcome Guest\n {id} {dt} IN'
+                    # elif state == 1:
+                    #     display_txt = f'Thank you Guest\n {id} {dt} OUT'
                     if state == 0:
-                        display_txt = f'Welcome Guest {id} {dt} IN'
+                        display_txt = f"Welcome "
+                        display_txt1 = f"{guest_id}"
+                        display_txt2 = f" {dt}"
                     elif state == 1:
-                        display_txt = f'Thank you Guest {id} {dt} OUT'
-                    guest_placeholder.text(display_txt)
+                        display_txt = f"Thank you"
+                        display_txt1 = f"{guest_id}"
+                        display_txt2 = f"{dt}"
+                    # guest_placeholder.text(display_txt)
+                        
+                    if state == 0:
+                        text_color = "green"
+                        font_size = "50px"
+                        text_color1 = "green"
+                        font_size1 = "30px"
+                    elif state == 1:
+                        text_color = "blue"
+                        font_size = "50px"
+                        text_color1 = "blue"
+                        font_size1 = "30px"
+                        
+                    styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
+                    styled_text1 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt1}</p>'
+                    styled_text2 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt2}</p>'
+                    guest_placeholder.markdown(styled_text, unsafe_allow_html=True)
+                    guest_name_placeholder.markdown(styled_text1, unsafe_allow_html=True)
+                    guest_date_placeholder.markdown(styled_text2, unsafe_allow_html=True)
+        
+        if 'recognized_faces'  in st.session_state:
+            st.session_state['recognized_faces'] = []
+        
+        duration = time.time() - start_time
 
+        if duration > 5:
+            print('inside if')
+            print('duration', duration)
+            attendent_placeholder.empty()
+            attendent_name_placeholder.empty()
+            attendent_date_placeholder.empty()
+            guest_placeholder.empty()
+            guest_name_placeholder.empty()
+            guest_date_placeholder.empty()
 
         num = datetime.now().date() - yesterday
         if num.days >= 1:
-            attendent_col.empty()
+            # attendent_col.empty()
             yesterday = datetime.now().date()
 
+        # close_btn_placeholder.empty()
+        # guest_placeholder.empty()
     
     fresh.release()

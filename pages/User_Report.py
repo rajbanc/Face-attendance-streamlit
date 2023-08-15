@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
 from core.db_utils import db_connection
+from core.db_connect import get_dbname
 
 st.set_page_config(layout='wide')
-st.title("User Report")
+st.title("User Attendance Report")
 
 
 # DB_NAME = get_dbname()
@@ -12,7 +13,15 @@ conn = db_connection(DB_NAME)
 
 mysql_cursor = conn.cursor(buffered=True)
 
-id = st.text_input("Enter the User_id:")
+user_ids = mysql_cursor.execute('SELECT attendee_name FROM manual_registration')
+user_ids = mysql_cursor.fetchall()
+str_id = [str(item[0]) for item in user_ids]
+
+user_id = st.selectbox('Select Userid', str_id)
+
+get_id = mysql_cursor.execute("SELECT userid FROM manual_registration WHERE attendee_name =%s", (user_id,))
+get_id= mysql_cursor.fetchone()
+id = get_id[0]
 
 search_container = st.empty()
 try:

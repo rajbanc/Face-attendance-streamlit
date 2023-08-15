@@ -10,6 +10,7 @@ from core.utils import cam_available
 from core.db_connect import get_dbname
 
 from core.camera_init import fresh
+print('fresh', fresh)
 
 st.title("Face Attendance system ")
 st.cache_data.clear()
