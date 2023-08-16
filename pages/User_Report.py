@@ -7,8 +7,8 @@ st.set_page_config(layout='wide')
 st.title("User Attendance Report")
 
 
-# DB_NAME = get_dbname()
-DB_NAME = 'srmlt_attendance'
+DB_NAME = get_dbname()
+# DB_NAME = 'srmlt_attendance'
 conn = db_connection(DB_NAME)
 
 mysql_cursor = conn.cursor(buffered=True)

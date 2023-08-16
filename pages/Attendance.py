@@ -29,8 +29,8 @@ st.title("Attendance")
 create_tables()
 
 if __name__=="__main__":
-    # DB_NAME = get_dbname()
-    DB_NAME = 'srmlt_attendance'
+    DB_NAME = get_dbname()
+    # DB_NAME = 'srmlt_attendance'
     # DB_NAME = config_data['Database'][0]['db_name']
     conn = db_connection(DB_NAME)
 

@@ -19,9 +19,9 @@ st.cache_data.clear()
 # with open('./config/db_config.yaml', 'r') as config_file:
 #     config_data = yaml.safe_load(config_file)
 
-# DB_NAME = get_dbname()
+DB_NAME = get_dbname()
 # print('database_name', DB_NAME)
-DB_NAME = 'srmlt_attendance'
+# DB_NAME = 'srmlt_attendance'
 
 # DB_NAME = config_data['Database'][0]['db_name']
 # print(f'Db_name {DB_NAME}')

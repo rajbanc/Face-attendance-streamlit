@@ -93,8 +93,8 @@ def create_table(db_name, table_name, col_names):
     sql_cursor.execute(table_creation_query)
 
 def create_tables():
-    # DB_NAME = 'adms_dbnew'
-    DB_NAME = 'srmlt_attendance'
+    DB_NAME = 'adms_dbnew'
+    # DB_NAME = 'srmlt_attendance'
     # DB_NAME = db_name
 
     TABLE_NAME = ['manual_registration', 'guest_registration', 'userinfo', 'checkinout']

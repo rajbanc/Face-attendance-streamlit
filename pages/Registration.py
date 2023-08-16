@@ -23,8 +23,8 @@ st.title("Registration")
 # DB_NAME = config_data['Database'][0]['db_name']
 # print(f'Db_name {DB_NAME}')
 
-# DB_NAME = get_dbname()
-DB_NAME = 'srmlt_attendance'
+DB_NAME = get_dbname()
+# DB_NAME = 'srmlt_attendance'
 conn = db_connection(DB_NAME)
 create_tables()
 
