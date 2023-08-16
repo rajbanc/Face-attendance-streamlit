@@ -4,6 +4,7 @@ import webbrowser
 import os
 import yaml
 import time
+import socket
 
 from core.db_utils import create_database, create_tables
 from core.utils import cam_available
@@ -28,6 +29,17 @@ DB_NAME = get_dbname()
 create_database(DB_NAME)
 
 create_tables()
+
+def get_ip_address():
+    hostname = socket.gethostname()
+
+    ip_addresses = socket.gethostbyname(hostname)
+
+    
+    return ip_addresses
+
+# Call the function to get the IP address
+ip_address = get_ip_address()
 
 # Function to read data from the YAML file
 def read_yaml_data(file_path):
@@ -76,7 +88,9 @@ if ip_cam:
         st.success("Successful")
         st.write("Redirecting to Attendance...")
         time.sleep(1)
-        webbrowser.open_new("http://192.168.10.123:8501/Attendance")
+        ip_address = get_ip_address()
+        webbrowser.open_new(f"http://{ip_address}:8501/Attendance")
+        # st.markdown('<a href="/Attendance" target= "_blank">Attendance</a>', unsafe_allow_html=True)
     else:
         st.error(f"Invalid address `{ip_cam}`")
         st.stop()
