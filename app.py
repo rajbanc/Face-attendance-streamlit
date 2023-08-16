@@ -76,7 +76,7 @@ if ip_cam:
         st.success("Successful")
         st.write("Redirecting to Attendance...")
         time.sleep(1)
-        webbrowser.open_new("http://localhost:8501/Attendance")
+        webbrowser.open_new("http://192.168.10.123:8501/Attendance")
     else:
         st.error(f"Invalid address `{ip_cam}`")
         st.stop()
