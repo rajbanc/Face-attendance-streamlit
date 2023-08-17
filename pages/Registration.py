@@ -15,8 +15,9 @@ from core.camera_init import fresh
 from core.db_connect import get_dbname
 print('freshh', fresh)
 
-st.set_page_config(layout='wide')
-st.title("Registration")
+st.set_page_config(layout='wide',
+                   page_title= "Registration")
+st.title("Registration ")
 
 # with open('./config/db_config.yaml', 'r') as config_file:
 #     config_data = yaml.safe_load(config_file)
@@ -113,11 +114,16 @@ with placeholder.container():
 
     if attendee_name  and device:
         # Open camera and capture photo
-        camera_col, button_col = col2.columns(2)
-        with camera_col:
+        # camera_col, button_col = col2.columns(2)
+        # with camera_col:
+        #     camera_placeholder = st.empty()
+        # with button_col:
+        #     button_placeholder = st.empty()
+
+        with col2:
             camera_placeholder = st.empty()
-        with button_col:
             button_placeholder = st.empty()
+
         # # ip_cam_url = ip_config_data['ip_cam_address']
         # cam = cv2.VideoCapture(ip_cam_url)
         num_images_to_cap = 5

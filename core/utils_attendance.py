@@ -12,7 +12,7 @@ duration = 30
 
 def verify_face(
     image, stored_encodings, attendee_names, attendee_ids, conn, 
-    device, guest_stored_encoding, guest_attendee_ids, face_bboxes
+    guest_stored_encoding, guest_attendee_ids, face_bboxes
     ):
     print("Entered to verify_face_function")
 

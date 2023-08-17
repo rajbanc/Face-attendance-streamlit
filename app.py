@@ -13,6 +13,10 @@ from core.db_connect import get_dbname
 from core.camera_init import fresh
 print('fresh', fresh)
 
+st.set_page_config(
+    page_title= 'Face Attendance App'
+)
+
 st.title("Face Attendance system ")
 st.cache_data.clear()
 
@@ -20,26 +24,16 @@ st.cache_data.clear()
 # with open('./config/db_config.yaml', 'r') as config_file:
 #     config_data = yaml.safe_load(config_file)
 
-DB_NAME = get_dbname()
+# DB_NAME = get_dbname()
 # print('database_name', DB_NAME)
-# DB_NAME = 'srmlt_attendance'
+DB_NAME = 'srmlt_attendance'
 
 # DB_NAME = config_data['Database'][0]['db_name']
 # print(f'Db_name {DB_NAME}')
-create_database(DB_NAME)
+db = create_database(DB_NAME)
+print('db', db)
 
 create_tables()
-
-def get_ip_address():
-    hostname = socket.gethostname()
-
-    ip_addresses = socket.gethostbyname(hostname)
-
-    
-    return ip_addresses
-
-# Call the function to get the IP address
-ip_address = get_ip_address()
 
 # Function to read data from the YAML file
 def read_yaml_data(file_path):
@@ -86,10 +80,10 @@ if ip_cam:
 
     if number_value and numeric_value and cam_available("rtsp://" + ip_cam):
         st.success("Successful")
-        st.write("Redirecting to Attendance...")
-        time.sleep(1)
-        ip_address = get_ip_address()
-        webbrowser.open_new(f"http://{ip_address}:8501/Attendance")
+        # st.write("Redirecting to Attendance...")
+        # time.sleep(1)
+        # ip_address = get_ip_address()
+        # webbrowser.open_new(f"http://{ip_address}:8501/Attendance")
         # st.markdown('<a href="/Attendance" target= "_blank">Attendance</a>', unsafe_allow_html=True)
     else:
         st.error(f"Invalid address `{ip_cam}`")
