@@ -245,11 +245,11 @@ if __name__=="__main__":
                     # elif state == 1:
                     #     display_txt = f'Thank you Guest\n {id} {dt} OUT'
                     if state == 0:
-                        display_txt = f"Welcome "
+                        display_txt = f"Welcome Guest "
                         display_txt1 = f"{guest_id}"
                         display_txt2 = f" {dt}"
                     elif state == 1:
-                        display_txt = f"Thank you"
+                        display_txt = f"Thank you Guest"
                         display_txt1 = f"{guest_id}"
                         display_txt2 = f"{dt}"
                     # guest_placeholder.text(display_txt)
