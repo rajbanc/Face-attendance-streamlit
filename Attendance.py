@@ -57,7 +57,9 @@ if __name__=="__main__":
 
     liveliness_model = tf.keras.models.load_model(model_path)
     labels = pickle.loads(open(le_path,'rb').read())
-    
+
+    ip_cam = st.sidebar.text_input("Enter Ip cam address")
+
     if 'id' not in st.session_state:
         st.session_state.id = []  
 
@@ -102,8 +104,8 @@ if __name__=="__main__":
             st.session_state.existing_data = {}  # Initialize to an empty dictionary
     
     else:
-        # Check if the user input has changed and update 'existing_data' if necessary
-        ip_cam = st.sidebar.text_input("Enter Ip cam address")
+        # # Check if the user input has changed and update 'existing_data' if necessary
+        # ip_cam = st.sidebar.text_input("Enter Ip cam address")
 
         if ip_cam:
             if ':' in ip_cam:
