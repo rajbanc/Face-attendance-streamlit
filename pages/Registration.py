@@ -1,31 +1,22 @@
 import streamlit as st
 import dlib
-import cv2
 import json
 import time
 import numpy as np
 from datetime import datetime
-import yaml
 
 from core.db_utils import db_connection, create_tables
-from core.utils_register import face_registration, get_userinfo_data, get_registration_data
+from core.utils_register import face_registration, get_userinfo_data
 from core.utils import get_image_base64, NumpyArrayEncoder, image_cropped, base64_img
 from core.liveliness_face import frontalfacedetector
 from core.camera_init import fresh
 from core.db_connect import get_dbname
-print('freshh', fresh)
 
 st.set_page_config(layout='wide',
                    page_title= "Registration")
 st.title("Registration ")
 
-# with open('./config/db_config.yaml', 'r') as config_file:
-#     config_data = yaml.safe_load(config_file)
-# DB_NAME = config_data['Database'][0]['db_name']
-# print(f'Db_name {DB_NAME}')
-
 DB_NAME = get_dbname()
-# DB_NAME = 'srmlt_attendance'
 conn = db_connection(DB_NAME)
 create_tables()
 
@@ -33,14 +24,14 @@ frontal_face_detection = dlib.get_frontal_face_detector()
 
 def insert_user_info(mysql_cursor):
     mysql_cursor.execute('''INSERT INTO userinfo (
-                     badgenumber, defaultdeptid, name, Password, Card, Privilege, AccGroup, TimeZones,
+                    badgenumber, defaultdeptid, name, Password, Card, Privilege, AccGroup, TimeZones,
                     Gender, Birthday, street, zip, ophone,FPHONE, pager, minzu, title, SN, SSN, U_Time,
                     State, City, SECURITYFLAGS, DelTag, RegisterOT, AutoSchPlan, MinAutoSchinterval, Image_id, entry_token)
                     VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 
-                          %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
-                         (None, None, None, None, None, None, None, None, None, None, None, None,
-                          None, None, None, None, None, None, None, None, None, None, None, None,
-                          None, None, None, None, None))
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)''',
+                        (None, None, None, None, None, None, None, None, None, None, None, None,
+                        None, None, None, None, None, None, None, None, None, None, None, None,
+                        None, None, None, None, None))
     conn.commit()
 
 
@@ -72,6 +63,11 @@ def registration(images):
                 return True
             if isinstance(face_embedding, np.ndarray):
                 st.session_state.face_embeddings.append(face_embedding)
+                text_color = "green"
+                font_size = "50px"
+                display_txt = 'Registration Successful!'
+                styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
+                placeholder.markdown(styled_text, unsafe_allow_html=True)
             
             if idx == 0:
                 image_base64 = get_image_base64(face_img) # storing only one photo
@@ -113,13 +109,6 @@ with placeholder.container():
     device = col1.text_input('Registration Device', value='', key='device')
 
     if attendee_name  and device:
-        # Open camera and capture photo
-        # camera_col, button_col = col2.columns(2)
-        # with camera_col:
-        #     camera_placeholder = st.empty()
-        # with button_col:
-        #     button_placeholder = st.empty()
-
         with col2:
             camera_placeholder = st.empty()
             button_placeholder = st.empty()
@@ -150,8 +139,6 @@ with placeholder.container():
 
             if capture_button:
                 capture_button  = False
-                # image_list.append(camera_photo)
-                # append camera photo only if face appears in camera
                 faces_exists = frontalfacedetector(camera_photo, frontal_face_detection)[0]
 
                 if len(faces_exists):
@@ -189,13 +176,7 @@ with placeholder.container():
         try:
             if status:
                 print('status', status)
-                text_color = "green"
-                font_size = "50px"
-                display_txt = 'Registration Successful!'
-                styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
-                st.markdown(styled_text, unsafe_allow_html=True)
-                # st.success('Registration Successful!')
-            # placeholder.empty()
+                
             status = False
         except Exception as e:
             print('eee' , e)

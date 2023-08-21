@@ -1,11 +1,10 @@
 import cv2
 import face_recognition
 import numpy as np
-import uuid
 import json
 from datetime import datetime
 
-from core.utils import NumpyArrayEncoder, get_image_base64, base64_img
+from core.utils import NumpyArrayEncoder, get_image_base64
 
 duration = 30
 
@@ -173,7 +172,7 @@ def verify_face(
                 created_on = datetime.now()
                 
                 mysql_cursor.execute(
-                   """INSERT INTO guest_registration(
+                    """INSERT INTO guest_registration(
                         guest_id, guest_name, image_base64, face_embedding, created_on)
                         VALUES (%s, %s, %s, %s, %s)""",
                     (init_userid, guest_name, image_base64,encoded_face_encoding, created_on)   
@@ -189,8 +188,7 @@ def verify_face(
                     ( init_userid, datetime.now(),checktype, verifycode, SN, sensorid, None, None) 
                 )
                 conn.commit()
-                recognized_faces.append({'state':'in_new', 'category':'guest', 'image': cropped_face, 'id': init_userid, 'currentime':current_time,})
-                print('sucessful insert')
+                recognized_faces.append({'state': checktype, 'category':'guest', 'image': cropped_face, 'id': init_userid, 'currentime':current_time,})
 
     mysql_cursor.close()
     return recognized_faces, guest_stored_encoding, guest_attendee_ids

@@ -60,3 +60,4 @@ def base64_img(img_str):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     # cv2.imwrite('detections/image.jpg', image)
     return image
+

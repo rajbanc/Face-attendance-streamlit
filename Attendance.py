@@ -1,15 +1,11 @@
-import os
-import time
 import streamlit as st
+import time
 import cv2
 import dlib
-import numpy as np
+import yaml
 import pickle 
 import tensorflow as tf
 from datetime import datetime, timedelta
-import pandas as pd
-
-import yaml
 
 from core.camera_init import fresh
 from core.liveliness_face import check_liveliness
@@ -30,23 +26,21 @@ st.title("Attendance")
 
 create_tables()
 
-
-# Function to read data from the YAML file
-# def read_yaml_data(file_path):
-#     if os.path.exists(file_path):
-#         with open(file_path, 'r') as file:
-#             existing_data = yaml.safe_load(file)
-#         return existing_data
-#     else:
-#         return None
+def clear_all_placeholders():
+    attendent_placeholder.empty()
+    attendent_name_placeholder.empty()
+    attendent_date_placeholder.empty()
+    guest_placeholder.empty()
+    guest_name_placeholder.empty()
+    guest_date_placeholder.empty()
+    close_btn_placeholder.empty()
 
 
 if __name__=="__main__":
     DB_NAME = get_dbname()
-    # DB_NAME = 'srmlt_attendance'
     create_database(DB_NAME)
-    # DB_NAME = config_data['Database'][0]['db_name']
     conn = db_connection(DB_NAME)
+
 
 
     frontal_face_detector = dlib.get_frontal_face_detector()
@@ -63,7 +57,7 @@ if __name__=="__main__":
     if 'id' not in st.session_state:
         st.session_state.id = []  
 
-    camera_col, attendent_col, guest_col = st.columns(3)
+    camera_col, attendent_col= st.columns(2)
 
     with camera_col:
         camera_placeholder = st.empty()
@@ -73,8 +67,6 @@ if __name__=="__main__":
         attendent_placeholder = st.empty()
         attendent_name_placeholder = st.empty()
         attendent_date_placeholder = st.empty()
-
-    with guest_col:
         guest_placeholder = st.empty()
         guest_name_placeholder = st.empty()
         guest_date_placeholder = st.empty()
@@ -86,14 +78,6 @@ if __name__=="__main__":
     stored_encodings, attendee_names, attendee_ids = get_user_data(mysql_cursor)
     guest_stored_encoding, guest_names, guest_attendee_ids = get_guest_data(mysql_cursor)
 
-    # print(f"initail camers  {fresh.camera }")
-    # with open('./config/ip_cam_config.yaml', 'r') as config_file:
-    #     ip_config_data = yaml.safe_load(config_file)
-
-    # if fresh.camera != ip_config_data['ip_cam_address']:
-    #     fresh.change_camera(ip_config_data['ip_cam_address'])
-    # print(f"changed camers  {fresh.camera }")
-
     # Create or get the 'existing_data' from st.session_state
     if 'existing_data' not in st.session_state:
         file_path = './config/ip_cam_config.yaml'
@@ -104,9 +88,6 @@ if __name__=="__main__":
             st.session_state.existing_data = {}  # Initialize to an empty dictionary
     
     else:
-        # # Check if the user input has changed and update 'existing_data' if necessary
-        # ip_cam = st.sidebar.text_input("Enter Ip cam address")
-
         if ip_cam:
             if ':' in ip_cam:
                 split_ip_cam = ip_cam.split(':')
@@ -164,7 +145,7 @@ if __name__=="__main__":
     st.sidebar.write(f"Ip_cam Address: {ip_config_data['ip_cam_address'][7:]}")
 
     if 'recognized_faces' not in st.session_state:
-        st.session_state['recognized_faces'] = None
+        st.session_state['recognized_faces'] = []
     
     while True:
         ret, frame = fresh.read()
@@ -190,8 +171,7 @@ if __name__=="__main__":
                 guest_stored_encoding, guest_attendee_ids, real_face_bboxes
                 )
         
-        ## detection and retrive 'in' or 'out' state
-        start_time = time.time()        
+        ## detection and retrive 'in' or 'out' state       
         if st.session_state['recognized_faces']:
             for face in st.session_state['recognized_faces']:
                 category = face['category']
@@ -199,7 +179,7 @@ if __name__=="__main__":
                     print("category", category)
                     display_txt = ''
                     name = face['name']
-                    id = face['id']
+                    manual_id = face['id']
                     state = face['state']
                     dt = str(face['currentime']).split('.')[0]
                     if state == 0:
@@ -211,7 +191,6 @@ if __name__=="__main__":
                         display_txt1 = f"{name.title()}"
                         display_txt2 = f"{dt}"
 
-                        # close_btn_placeholder.text(display_txt)
                     if state == 0:
                         text_color = "green"
                         font_size = "70px"
@@ -239,7 +218,7 @@ if __name__=="__main__":
                     guest_id = face['id']
 
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                    close_btn_placeholder.image(image)
+                    close_btn_placeholder.image(image, state)
                     # if state == 0:
                     #     display_txt = f'Welcome Guest\n {id} {dt} IN'
                     # elif state == 1:
@@ -252,50 +231,39 @@ if __name__=="__main__":
                         display_txt = f"Thank you Guest"
                         display_txt1 = f"{guest_id}"
                         display_txt2 = f"{dt}"
-                    # guest_placeholder.text(display_txt)
                         
                     if state == 0:
                         text_color = "green"
-                        font_size = "50px"
+                        font_size = "60px"
                         text_color1 = "green"
                         font_size1 = "30px"
                     elif state == 1:
-                        text_color = "blue"
-                        font_size = "50px"
-                        text_color1 = "blue"
+                        text_color = "red"
+                        font_size = "60px"
+                        text_color1 = "red"
                         font_size1 = "30px"
-                        
                     styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
                     styled_text1 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt1}</p>'
                     styled_text2 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt2}</p>'
                     guest_placeholder.markdown(styled_text, unsafe_allow_html=True)
                     guest_name_placeholder.markdown(styled_text1, unsafe_allow_html=True)
                     guest_date_placeholder.markdown(styled_text2, unsafe_allow_html=True)
-        
+
         if 'recognized_faces'  in st.session_state:
             st.session_state['recognized_faces'] = []
-        
-        duration = time.time() - start_time
 
-        if duration > 5:
-            print('inside if')
-            print('duration', duration)
-            attendent_placeholder.empty()
-            attendent_name_placeholder.empty()
-            attendent_date_placeholder.empty()
-            guest_placeholder.empty()
-            guest_name_placeholder.empty()
-            guest_date_placeholder.empty()
+        if 'last_display_time' not in st.session_state:
+            st.session_state.last_display_time = time.time()
 
-        
+        if time.time() - st.session_state.last_display_time > 10:
+            clear_all_placeholders()
+            st.session_state.last_display_time = time.time()
 
         num = datetime.now().date() - yesterday
         if num.days >= 1:
             # attendent_col.empty()
             yesterday = datetime.now().date()
 
-        # close_btn_placeholder.empty()
-        # guest_placeholder.empty()
     
     
     fresh.release()

@@ -1,7 +1,6 @@
 import mysql.connector as connector
 import yaml
 import sys
-import hashlib
 
 with open('./config/db_config.yaml', 'r') as config_file:
     config_data = yaml.safe_load(config_file)
@@ -15,6 +14,7 @@ def get_connection():
         password = config_data['Database'][0]['password']#hashlib.md5(config_data['Database'][0]['password']).hexdigest()
         
     )
+
 """
 def get_connection1():
     try:
@@ -94,9 +94,6 @@ def create_table(db_name, table_name, col_names):
 
 def create_tables():
     DB_NAME = 'adms_dbnew'
-    # DB_NAME = 'srmlt_attendance'
-    # DB_NAME = db_name
-
     TABLE_NAME = ['manual_registration', 'guest_registration', 'userinfo', 'checkinout']
 
     create_table(

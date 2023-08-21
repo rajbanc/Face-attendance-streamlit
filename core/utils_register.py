@@ -40,7 +40,6 @@ def get_user_data(mysql_cursor):
         attendee_name = row[1]
         userid = row[2]
         face_embeddings = row[5] #['face_embedding']
-        # print('face_embedd', face_embeddings)
         if isinstance(face_embeddings, bytes):
             face_embeddings = str(face_embeddings, encoding='utf-8')
         elif isinstance(face_embeddings, str):
