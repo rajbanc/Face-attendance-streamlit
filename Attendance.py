@@ -109,13 +109,16 @@ if __name__=="__main__":
                         number_value = False
                 numeric_value = True
 
-
+            start = time.time()
             if number_value and numeric_value and cam_available("rtsp://" + ip_cam):
                 st.toast("Successful")
+            
             else:
-                st.error(f"Invalid address `{ip_cam}`")
+                st.error(f"Invalid address: `{ip_cam}`")
                 st.stop()
-
+            end = time.time()
+            duration = end - start
+            print("time taken to check camera available", duration)
         ip_cam = "rtsp://" + ip_cam
 
         if st.session_state.existing_data.get('ip_cam_address') != ip_cam and ip_cam !='rtsp://':
@@ -186,17 +189,14 @@ if __name__=="__main__":
                         display_txt = f"Welcome "
                         display_txt1 = f"{name.title()}"
                         display_txt2 = f" {dt}"
-                    elif state == 1:
-                        display_txt = f"Thank you"
-                        display_txt1 = f"{name.title()}"
-                        display_txt2 = f"{dt}"
-
-                    if state == 0:
                         text_color = "green"
                         font_size = "70px"
                         text_color1 = "green"
                         font_size1 = "30px"
                     elif state == 1:
+                        display_txt = f"Thank you"
+                        display_txt1 = f"{name.title()}"
+                        display_txt2 = f"{dt}"
                         text_color = "blue"
                         font_size = "70px"
                         text_color1 = "blue"
@@ -227,21 +227,19 @@ if __name__=="__main__":
                         display_txt = f"Welcome Guest "
                         display_txt1 = f"{guest_id}"
                         display_txt2 = f" {dt}"
-                    elif state == 1:
-                        display_txt = f"Thank you Guest"
-                        display_txt1 = f"{guest_id}"
-                        display_txt2 = f"{dt}"
-                        
-                    if state == 0:
                         text_color = "green"
                         font_size = "60px"
                         text_color1 = "green"
                         font_size1 = "30px"
                     elif state == 1:
+                        display_txt = f"Thank you Guest"
+                        display_txt1 = f"{guest_id}"
+                        display_txt2 = f"{dt}"
                         text_color = "red"
                         font_size = "60px"
                         text_color1 = "red"
                         font_size1 = "30px"
+                        
                     styled_text = f'<p style="color: {text_color}; font-size: {font_size};">{display_txt}</p>'
                     styled_text1 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt1}</p>'
                     styled_text2 = f'<p style="color: {text_color1}; font-size: {font_size1};">{display_txt2}</p>'
@@ -255,7 +253,7 @@ if __name__=="__main__":
         if 'last_display_time' not in st.session_state:
             st.session_state.last_display_time = time.time()
 
-        if time.time() - st.session_state.last_display_time > 10:
+        if time.time() - st.session_state.last_display_time > 15:
             clear_all_placeholders()
             st.session_state.last_display_time = time.time()
 

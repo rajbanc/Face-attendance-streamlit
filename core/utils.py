@@ -1,4 +1,5 @@
 import os
+import time
 import streamlit as st
 import cv2
 import numpy as np
@@ -26,7 +27,7 @@ def cam_available(ip_cam):
         ret, frame = cap.read()
         if not ret:
             return False
-        return True
+    return True
     
 def image_cropped(image):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
