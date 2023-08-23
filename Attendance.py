@@ -86,9 +86,9 @@ if __name__=="__main__":
             st.session_state.existing_data = existing_data
         else:
             st.session_state.existing_data = {}  # Initialize to an empty dictionary
-    
+
     else:
-        if ip_cam:
+        if ip_cam and ':' in ip_cam:
             if ':' in ip_cam:
                 split_ip_cam = ip_cam.split(':')
                 ip_cam_split = split_ip_cam[0].split('.')
@@ -109,16 +109,12 @@ if __name__=="__main__":
                         number_value = False
                 numeric_value = True
 
-            start = time.time()
             if number_value and numeric_value and cam_available("rtsp://" + ip_cam):
                 st.toast("Successful")
             
             else:
                 st.error(f"Invalid address: `{ip_cam}`")
                 st.stop()
-            end = time.time()
-            duration = end - start
-            print("time taken to check camera available", duration)
         ip_cam = "rtsp://" + ip_cam
 
         if st.session_state.existing_data.get('ip_cam_address') != ip_cam and ip_cam !='rtsp://':

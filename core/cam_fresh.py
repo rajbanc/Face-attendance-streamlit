@@ -47,7 +47,18 @@ class FreshestFrame(threading.Thread):
 
 		self.capture.set(cv2.CAP_PROP_FPS, 10)
 		assert self.capture.isOpened()
-		# self.running = True
+		# # self.running = True
+
+		# try:
+		# 	self.camera = camera
+		# 	self.capture = cv2.VideoCapture(self.camera)
+
+		# 	self.capture.set(cv2.CAP_PROP_FPS, 10)
+		# 	if not self.capture.isOpened():
+		# 		raise Exception("Failed to open the camera.")
+		
+		# except Exception as e:
+		# 	print(f"Error while changing the camera: {str(e)}")
 		
 	def start(self):
 		self.running = True
@@ -65,6 +76,13 @@ class FreshestFrame(threading.Thread):
 			(rv, img) = self.capture.read()
 			assert rv
 			counter += 1
+
+			# if not rv:
+			# 	# Handle the case where frame reading fails
+			# 	# print("Error reading frame from camera.")
+			# 	continue  # Skip this iteration and continue the loop
+        
+			# counter += 1
 
 			# publish the frame
 			with self.cond: # lock the condition for this operation
