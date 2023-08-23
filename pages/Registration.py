@@ -1,3 +1,4 @@
+import uuid
 import streamlit as st
 import dlib
 import json
@@ -59,7 +60,7 @@ def registration(images):
             if face_data:
                 st.write("Face matched!")
                 st.write(f"Face is assigned to {face_data[0]}")
-                time.sleep(2)
+                time.sleep(3)
                 return True
             if isinstance(face_embedding, np.ndarray):
                 st.session_state.face_embeddings.append(face_embedding)
@@ -79,12 +80,9 @@ def registration(images):
 
     face_encoding = {"face_embedding":  st.session_state.face_embeddings}
     encoded_face_encoding = json.dumps(face_encoding, cls=NumpyArrayEncoder)
-    print('face_encoding', encoded_face_encoding)
-    print('face_encoding type', type(encoded_face_encoding))
+
     created_on = datetime.now()
     next_userid = get_userinfo_data(mysql_cursor)
-    print('next_userid', next_userid)
-
 
     mysql_cursor.execute('''INSERT INTO manual_registration (
                 attendee_name, userid, device, image_base64, face_embedding, created_on)
@@ -129,9 +127,8 @@ with placeholder.container():
                 st.error("Can't capture frame")
                 continue
             camera_placeholder.image(camera_rgb, caption="Capture Image")
-            
-            try:
 
+            try:
                 capture_button = button_placeholder.button("Capture Image")
 
             except Exception as e:
@@ -146,7 +143,6 @@ with placeholder.container():
                     st.success(f"Image  {len(st.session_state.image_list)} Capture Successful!")
                 else:
                     st.info("ReCapture with face in image frame")
-                print('num of image', len(st.session_state.image_list))
             try:
                 if len(st.session_state.image_list) >= num_images_to_cap:
                     break
@@ -157,11 +153,9 @@ with placeholder.container():
                 
         if 'faces' not in st.session_state:
             st.session_state.faces = []
-            print('enter here')
         try:   
             for camera_photo in st.session_state.image_list:
                 st.session_state.faces.append(frontalfacedetector(camera_photo, frontal_face_detection)[0])
-            print('  st.session_state.faces',  st.session_state.faces)
             status = registration(st.session_state.image_list)
         except Exception as e:
             print(f"Error\n{e}")

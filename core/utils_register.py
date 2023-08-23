@@ -93,13 +93,9 @@ def face_registration(image, face_crop, mysql_cursor):
     for encode_face, face_loc in zip(encoded_face_in_frame, face_cropped):
         stored_encodings = np.array(stored_encodings)
         matches = face_recognition.compare_faces(stored_encodings, encode_face, tolerance= 0.45)
-        print('matches ', matches)
         face_dist = face_recognition.face_distance(stored_encodings, encode_face)
-        print('face_dist ',face_dist)
         try:
             match_index = np.argmin(face_dist)
-            print(match_index)
-            print('matches[match_index] ', matches[match_index])
             if matches[match_index]:
                 name = attendee_names[match_index].upper()
                 id = attendee_ids[match_index]
@@ -107,8 +103,6 @@ def face_registration(image, face_crop, mysql_cursor):
                 ret_val.append([name, id])
         except:
             print("Face not found in database")
-    print('ret_val: ', ret_val)
-    print('encoded_face_in_frame: ', encoded_face_in_frame)
 
     if len(encoded_face_in_frame) > 0:
         return ret_val, encoded_face_in_frame[0]

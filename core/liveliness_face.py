@@ -6,7 +6,6 @@ import numpy as np
 def frontalfacedetector(image, frontal_face_detector):
     height, width, _ = image.shape
     output_image = image.copy()
-    # print("output", output_image)
 
     results = frontal_face_detector(output_image)
     face_coordinates = []
